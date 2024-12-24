@@ -6,12 +6,23 @@
 {% block content %}
     <div class="container mt-5">
         <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-4 d-flex flex-column"> <!-- col-md-3'ü col-md-4 olarak değiştirin -->
                 <h1 class="mb-4">Servers</h1>
-                <div class="list-group">
-                    {% for server in servers %}
-                        <a href="{{ url_for('server', server_id=server[0]) }}" class="list-group-item list-group-item-action">{{ server[1] }}</a>
-                    {% endfor %}
+                <div class="server-list-container flex-grow-1" style="height: 600px; overflow-y: auto;">
+                    <div class="list-group h-100">
+                        {% for server in servers %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{{ url_for('server', server_id=server[0]) }}" class="list-group-item list-group-item-action flex-grow-1">{{ server[1] }}</a>
+                                {% if session['role'] == 'admin' %}
+                                    <form method="post" action="{{ url_for('delete_server_route') }}" class="d-inline ml-2">
+                                        <input type="hidden" name="server_id" value="{{ server[0] }}">
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
+                                    <button class="btn btn-primary btn-sm ml-2" onclick="showUpdateForm('{{ server[0] }}', '{{ server[1] }}')">Update</button>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
                 <form method="post" action="{{ url_for('add_server_route') }}" class="mt-3">
                     <div class="form-group">
@@ -21,25 +32,29 @@
                     <button type="submit" class="btn btn-primary btn-block">Add Server</button>
                 </form>
             </div>
-            <div class="col-md-9">
+            <div class="col-md-8 d-flex flex-column"> <!-- col-md-9'u col-md-8 olarak değiştirin -->
                 <h2 class="mb-4">Messages</h2>
-                <ul class="list-group">
-                    {% for message, username, message_user_id, profile_picture in messages %}
-                        {% if message_user_id == user_id %}
-                            <li class="list-group-item text-right d-flex justify-content-end align-items-center">
-                                <span>{{ message }}</span>
-                                <img src="{{ url_for('static', filename='profile_pictures/' ~ (profile_picture if profile_picture else 'default.png')) }}" class="rounded-circle ml-2" width="30" height="30" alt="Profile Picture">
+                <div class="messages-container flex-grow-1" style="height: 600px; overflow-y: auto;">
+                    <ul class="list-group h-100">
+                        {% for message in messages %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ url_for('static', filename='profile_pictures/' ~ (message[3] if message[3] else 'default.png')) }}" class="rounded-circle mr-2" width="30" height="30" alt="Profile Picture">
+                                    <span class="ml-2"><strong>{{ message[1] }}</strong></span>
+                                    <span class="ml-2">{{ message[0] }}</span>
+                                </div>
+                                {% if session['role'] == 'admin' %}
+                                    <form method="post" action="{{ url_for('delete_message_route') }}" class="d-inline">
+                                        <input type="hidden" name="message_id" value="{{ message[4] }}">
+                                        <input type="hidden" name="server_id" value="{{ server_id }}">
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
+                                {% endif %}
                             </li>
-                        {% else %}
-                            <li class="list-group-item text-left d-flex justify-content-start align-items-center">
-                                <img src="{{ url_for('static', filename='profile_pictures/' ~ (profile_picture if profile_picture else 'default.png')) }}" class="rounded-circle mr-2" width="30" height="30" alt="Profile Picture">
-                                <span class="ml-2"><strong>{{ username }}</strong></span>
-                                <span class="ml-2">{{ message }}</span>
-                            </li>
-                        {% endif %}
-                    {% endfor %}
-                </ul>
-                <form method="post" action="{{ url_for('message_operations') }}" class="mt-3">
+                        {% endfor %}
+                    </ul>
+                </div>
+                <form method="post" action="{{ url_for('message_operations') }}" class="mt-3 w-100">
                     <input type="hidden" name="action" value="add_message">
                     <input type="hidden" name="server_id" value="{{ server_id }}">
                     <div class="form-group">
@@ -51,4 +66,39 @@
             </div>
         </div>
     </div>
+
+    <!-- Update Server Form Modal -->
+    <div class="modal fade" id="updateServerModal" tabindex="-1" role="dialog" aria-labelledby="updateServerModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form method="post" action="{{ url_for('update_server_route') }}">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="updateServerModalLabel">Update Server</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="update_server_id" name="server_id">
+                        <div class="form-group">
+                            <label for="update_server_name">New Server Name:</label>
+                            <input type="text" id="update_server_name" name="server_name" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Update Server</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showUpdateForm(serverId, serverName) {
+            document.getElementById('update_server_id').value = serverId;
+            document.getElementById('update_server_name').value = serverName;
+            $('#updateServerModal').modal('show');
+        }
+    </script>
 {% endblock %}

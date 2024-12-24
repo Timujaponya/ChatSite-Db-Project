@@ -1,0 +1,43 @@
+<!-- templates/admin.html -->
+{% extends "base.html" %}
+
+{% block title %}Yönetim{% endblock %}
+
+{% block content %}
+    <h1 class="mt-5">Yönetim Paneli</h1>
+    <p>Bu sayfa sadece admin kullanıcılar tarafından erişilebilir.</p>
+    <h2 class="mt-5">Kullanıcılar</h2>
+    <table class="table table-striped mt-3">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user[1] }}</td>
+                <td>{{ user[2] }}</td>
+                <td>{{ user[6] }}</td>
+                <td>
+                    {% if user[6] != 'admin' %}
+                    <form method="post" action="{{ url_for('update_user_role') }}" class="d-inline">
+                        <input type="hidden" name="user_id" value="{{ user[0] }}">
+                        <select name="role" class="form-control d-inline w-auto">
+                            <option value="user" {% if user[6] == 'user' %}selected{% endif %}>User</option>
+                            <option value="admin" {% if user[6] == 'admin' %}selected{% endif %}>Admin</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                    </form>
+                    {% else %}
+                    <span class="text-muted">Cannot change role of another admin</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

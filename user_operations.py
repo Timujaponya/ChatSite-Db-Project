@@ -1,8 +1,8 @@
 # user_operations.py
 from db_utils import execute_query
 
-def add_user(username, email, password):
-    return execute_query('insert_user', (username, email, password), fetch_one=True)
+def add_user(username, email, password, role='user'):
+    return execute_query('insert_user', (username, email, password, role), fetch_one=True)
 
 def list_users():
     return execute_query('select_users', fetch_all=True)
@@ -11,8 +11,11 @@ def delete_user(user_id):
     execute_query('delete_user', (user_id,))
     return f"User {user_id} deleted."
 
-def update_user(user_id, username, email):
-    execute_query('update_user', (username, email, user_id))
+def update_user(user_id, username=None, email=None, role=None):
+    if username is not None and email is not None:
+        execute_query('update_user', (username, email, role, user_id))
+    elif role is not None:
+        execute_query('update_user_role', (role, user_id))
     return f"User {user_id} updated."
 
 def authenticate_user(username, password):

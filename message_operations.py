@@ -11,8 +11,16 @@ def list_all_messages_with_usernames(server_id):
     return execute_query('select_all_messages_with_usernames', (server_id,), fetch_all=True)
 
 def delete_message(message_id):
-    execute_query('delete_message', (message_id,))
-    return f"Message {message_id} deleted."
+    print(f"Executing delete_message with ID: {message_id}")  # Hata ayıklama için log ekleyin
+    result = execute_query('delete_message', (message_id,))
+    print(f"Delete result: {result}")  # Hata ayıklama için log ekleyin
+    return result
+
+def delete_messages_by_server(server_id):
+    print(f"Executing delete_messages_by_server with server ID: {server_id}")  # Hata ayıklama için log ekleyin
+    result = execute_query('delete_messages_by_server', (server_id,))
+    print(f"Delete result: {result}")  # Hata ayıklama için log ekleyin
+    return result
 
 def update_message(message_id, content):
     execute_query('update_message', (content, message_id))
@@ -35,3 +43,14 @@ def add_server(server_name):
 
 def list_servers():
     return execute_query('select_servers', fetch_all=True)
+
+def delete_server(server_id):
+    print(f"Executing delete_server with ID: {server_id}")  # Hata ayıklama için log ekleyin
+    delete_messages_by_server(server_id)  # Sunucuya bağlı tüm mesajları sil
+    result = execute_query('delete_server', (server_id,))
+    print(f"Delete result: {result}")  # Hata ayıklama için log ekleyin
+    return result
+
+def update_server(server_id, server_name):
+    execute_query('update_server', (server_name, server_id))
+    return f"Server {server_id} updated."

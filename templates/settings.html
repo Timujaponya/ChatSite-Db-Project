@@ -9,12 +9,25 @@
     <form method="post" action="{{ url_for('update_user_info') }}" class="mt-3">
         <div class="form-group">
             <label for="username">New Username:</label>
-            <input type="text" id="username" name="username" class="form-control" required>
+            <input type="text" id="username" name="username" class="form-control" value="{{ user_profile[1] }}" required>
         </div>
         <div class="form-group">
             <label for="email">New Email:</label>
-            <input type="email" id="email" name="email" class="form-control" required>
+            <input type="email" id="email" name="email" class="form-control" value="{{ user_profile[2] }}" required>
         </div>
+        <div class="form-group">
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" class="form-control">{{ user_profile[5] }}</textarea>
+        </div>
+        {% if session['role'] == 'admin' %}
+        <div class="form-group">
+            <label for="role">Role:</label>
+            <select id="role" name="role" class="form-control">
+                <option value="user" {% if user_profile[4] == 'user' %}selected{% endif %}>User</option>
+                <option value="admin" {% if user_profile[4] == 'admin' %}selected{% endif %}>Admin</option>
+            </select>
+        </div>
+        {% endif %}
         <button type="submit" class="btn btn-primary">Update Information</button>
     </form>
 
