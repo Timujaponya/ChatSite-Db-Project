@@ -1,0 +1,40 @@
+<!-- templates/message_operations.html -->
+{% extends "base.html" %}
+
+{% block title %}Message Operations{% endblock %}
+
+{% block content %}
+    <h1 class="mt-5">Message Operations</h1>
+    <form method="post" class="mt-3">
+        <input type="hidden" name="action" value="add_message">
+        <div class="form-group">
+            <label for="content">Message Content:</label>
+            <input type="text" id="content" name="content" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">Add Message</button>
+    </form>
+    <form method="post" class="mt-3">
+        <input type="hidden" name="action" value="like_message">
+        <div class="form-group">
+            <label for="message_id">Message ID:</label>
+            <input type="text" id="message_id" name="message_id" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">Like Message</button>
+    </form>
+    <form method="post" class="mt-3">
+        <input type="hidden" name="action" value="unlike_message">
+        <div class="form-group">
+            <label for="message_id">Message ID:</label>
+            <input type="text" id="message_id" name="message_id" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">Unlike Message</button>
+    </form>
+    <ul class="list-group mt-3">
+        {% for message in messages %}
+            <li class="list-group-item">{{ message[1] }}</li> <!-- message[1] içerik bilgisini temsil eder -->
+        {% endfor %}
+    </ul>
+    <div class="mt-3">
+        <a href="{{ url_for('main') }}" class="btn btn-secondary">Back to Main Menu</a>
+    </div>
+{% endblock %}

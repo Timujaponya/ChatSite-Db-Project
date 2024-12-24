@@ -1,0 +1,13 @@
+<!-- templates/main.html -->
+{% extends "base.html" %}
+
+{% block title %}Main Menu{% endblock %}
+
+{% block content %}
+    <h1 class="mt-5">Main Menu</h1>
+    <div class="mt-3">
+        <a href="{{ url_for('user_operations') }}" class="btn btn-primary">User Operations</a>
+        <a href="{{ url_for('message_operations') }}" class="btn btn-secondary">Message Operations</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+    </div>
+{% endblock %}

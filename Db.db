@@ -1,0 +1,146 @@
+-- Create Users Table
+CREATE TABLE Users (
+    user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create Roles Table
+CREATE TABLE Roles (
+    role_id SERIAL PRIMARY KEY,
+    role_name VARCHAR(50) NOT NULL
+);
+
+-- Create Followers Table
+CREATE TABLE Followers (
+    follower_id UUID REFERENCES Users(user_id),
+    followed_id UUID REFERENCES Users(user_id),
+    PRIMARY KEY (follower_id, followed_id)
+);
+
+-- Create Messages Table
+CREATE TABLE Messages (
+    message_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES Users(user_id),
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create DirectMessages Table
+CREATE TABLE DirectMessages (
+    dm_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sender_id UUID REFERENCES Users(user_id),
+    receiver_id UUID REFERENCES Users(user_id),
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create Comments Table
+CREATE TABLE Comments (
+    comment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    message_id UUID REFERENCES Messages(message_id),
+    user_id UUID REFERENCES Users(user_id),
+    content TEXT NOT NULL CHECK (LENGTH(content) <= 300),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create Likes Table
+CREATE TABLE Likes (
+    like_id SERIAL PRIMARY KEY,
+    message_id UUID REFERENCES Messages(message_id),
+    user_id UUID REFERENCES Users(user_id)
+);
+
+-- Create SavedMessages Table
+CREATE TABLE SavedMessages (
+    user_id UUID REFERENCES Users(user_id),
+    message_id UUID REFERENCES Messages(message_id),
+    PRIMARY KEY (user_id, message_id)
+);
+
+-- Create BlockedUsers Table
+CREATE TABLE BlockedUsers (
+    blocker_id UUID REFERENCES Users(user_id),
+    blocked_id UUID REFERENCES Users(user_id),
+    PRIMARY KEY (blocker_id, blocked_id)
+);
+
+-- Create Notifications Table
+CREATE TABLE Notifications (
+    notification_id SERIAL PRIMARY KEY,
+    user_id UUID REFERENCES Users(user_id),
+    content TEXT NOT NULL,
+    read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create Reports Table
+CREATE TABLE Reports (
+    report_id SERIAL PRIMARY KEY,
+    user_id UUID REFERENCES Users(user_id),
+    reported_user_id UUID REFERENCES Users(user_id),
+    reason TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create Media Table
+CREATE TABLE Media (
+    media_id SERIAL PRIMARY KEY,
+    message_id UUID REFERENCES Messages(message_id),
+    media_url TEXT NOT NULL
+);
+
+-- Function to notify users on new followers
+CREATE OR REPLACE FUNCTION notify_new_follower() RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO Notifications (user_id, content, created_at)
+    VALUES (NEW.followed_id, CONCAT('You have a new follower: ', (SELECT username FROM Users WHERE user_id = NEW.follower_id)), CURRENT_TIMESTAMP);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger for notifying new followers
+CREATE TRIGGER new_follower_trigger
+AFTER INSERT ON Followers
+FOR EACH ROW
+EXECUTE FUNCTION notify_new_follower();
+
+-- Function to delete related data when a user is deleted
+CREATE OR REPLACE FUNCTION cascade_delete_user() RETURNS TRIGGER AS $$
+BEGIN
+    DELETE FROM Messages WHERE user_id = OLD.user_id;
+    DELETE FROM Followers WHERE follower_id = OLD.user_id OR followed_id = OLD.user_id;
+    DELETE FROM DirectMessages WHERE sender_id = OLD.user_id OR receiver_id = OLD.user_id;
+    DELETE FROM Comments WHERE user_id = OLD.user_id;
+    DELETE FROM Likes WHERE user_id = OLD.user_id;
+    DELETE FROM SavedMessages WHERE user_id = OLD.user_id;
+    DELETE FROM BlockedUsers WHERE blocker_id = OLD.user_id OR blocked_id = OLD.user_id;
+    DELETE FROM Notifications WHERE user_id = OLD.user_id;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger for cascading user deletions
+CREATE TRIGGER cascade_user_delete_trigger
+AFTER DELETE ON Users
+FOR EACH ROW
+EXECUTE FUNCTION cascade_delete_user();
+
+-- Function to update notification read status
+CREATE OR REPLACE FUNCTION mark_notification_read(notification_id INT) RETURNS VOID AS $$
+BEGIN
+    UPDATE Notifications SET read = TRUE WHERE notification_id = notification_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to calculate total likes for a message
+CREATE OR REPLACE FUNCTION count_likes_for_message(message_id UUID) RETURNS INT AS $$
+DECLARE
+    like_count INT;
+BEGIN
+    SELECT COUNT(*) INTO like_count FROM Likes WHERE message_id = message_id;
+    RETURN like_count;
+END;
+$$ LANGUAGE plpgsql;
