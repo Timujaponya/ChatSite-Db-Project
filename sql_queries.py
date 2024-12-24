@@ -7,14 +7,21 @@ QUERIES = {
     'update_user': "UPDATE Users SET username = %s, email = %s WHERE user_id = %s;",
     'authenticate_user': "SELECT user_id FROM Users WHERE username = %s AND password = %s;",
     'get_user_id_by_username': "SELECT user_id FROM Users WHERE username = %s;",
+    'select_user_profile': "SELECT user_id, username, email, profile_picture FROM Users WHERE user_id = %s;",
+    'update_profile_picture': "UPDATE Users SET profile_picture = %s WHERE user_id = %s;",
+
+    # Servers
+    'insert_server': "INSERT INTO Servers (server_name) VALUES (%s) RETURNING server_id;",
+    'select_servers': "SELECT * FROM Servers;",
 
     # Messages
-    'insert_message': "INSERT INTO Messages (user_id, content) VALUES (%s, %s) RETURNING message_id;",
+    'insert_message': "INSERT INTO Messages (user_id, content, server_id) VALUES (%s, %s, %s) RETURNING message_id;",
     'select_messages': "SELECT * FROM Messages WHERE user_id = %s;",
     'select_all_messages_with_usernames': """
-        SELECT Messages.content, Users.username 
-        FROM Messages 
+        SELECT Messages.content, Users.username, Messages.user_id, Users.profile_picture
+        FROM Messages
         JOIN Users ON Messages.user_id = Users.user_id
+        WHERE Messages.server_id = %s
         ORDER BY Messages.created_at DESC;
     """,
     'delete_message': "DELETE FROM Messages WHERE message_id = %s;",

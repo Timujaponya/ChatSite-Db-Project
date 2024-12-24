@@ -1,0 +1,18 @@
+<!-- templates/profile.html -->
+{% extends "base.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-4">
+                <img src="{{ url_for('static', filename='profile_pictures/' ~ (user_profile[3] if user_profile[3] else 'default.png')) }}" class="rounded-circle img-fluid" alt="Profile Picture">
+            </div>
+            <div class="col-md-8">
+                <h1>{{ user_profile[1] }}</h1>
+                <p>Email: {{ user_profile[2] }}</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}

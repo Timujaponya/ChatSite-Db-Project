@@ -4,10 +4,27 @@
 {% block title %}Main Menu{% endblock %}
 
 {% block content %}
-    <h1 class="mt-5">Main Menu</h1>
-    <div class="mt-3">
-        <a href="{{ url_for('user_operations') }}" class="btn btn-primary">User Operations</a>
-        <a href="{{ url_for('message_operations') }}" class="btn btn-secondary">Message Operations</a>
-        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-3">
+                <h1 class="mb-4">Servers</h1>
+                <div class="list-group">
+                    {% for server in servers %}
+                        <a href="{{ url_for('server', server_id=server[0]) }}" class="list-group-item list-group-item-action">{{ server[1] }}</a>
+                    {% endfor %}
+                </div>
+                <form method="post" action="{{ url_for('add_server_route') }}" class="mt-3">
+                    <div class="form-group">
+                        <label for="server_name">Add Server:</label>
+                        <input type="text" id="server_name" name="server_name" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Add Server</button>
+                </form>
+            </div>
+            <div class="col-md-9">
+                <h2 class="mb-4">Welcome to MyApp!</h2>
+                <p>Select a server from the list to start messaging.</p>
+            </div>
+        </div>
     </div>
 {% endblock %}
