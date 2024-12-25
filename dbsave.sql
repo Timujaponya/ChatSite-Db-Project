@@ -79,7 +79,6 @@ CREATE TABLE BlockedUsers (
     FOREIGN KEY (blocker_id) REFERENCES Users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (blocked_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
-
 -- DirectMessages Tablosu
 CREATE TABLE DirectMessages (
     dm_id SERIAL PRIMARY KEY,

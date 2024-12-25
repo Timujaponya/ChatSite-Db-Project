@@ -1,7 +1,7 @@
 from flask import Flask, request, redirect, url_for, render_template, flash, session
 from settings import add_user, authenticate_user, update_user, update_password, update_profile_picture, get_user_id_by_username, get_user_profile, update_user_description
 from message_operations import add_message, list_all_messages_with_usernames, like_message, unlike_message, add_server, list_servers, delete_server, update_server, delete_message, add_dm, list_dms, delete_dm, list_dm_conversations
-from user_operations import list_users, follow_user, unfollow_user, get_followers_count
+from user_operations import list_users, follow_user, unfollow_user, get_followers_count, block_user, unblock_user, is_user_blocked
 from db_utils import execute_query
 import os
 
@@ -151,15 +151,46 @@ def unfollow(user_id):
     flash('You have unfollowed this user.', 'success')
     return redirect(url_for('profile', username=request.form['username']))
 
+@app.route('/block/<int:user_id>', methods=['POST'])
+def block(user_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    blocker_id = get_user_id_by_username(session['username'])
+    block_user(blocker_id, user_id)
+    flash('You have blocked this user.', 'success')
+    return redirect(url_for('profile', username=request.form['username']))
+
+@app.route('/unblock/<int:user_id>', methods=['POST'])
+def unblock(user_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    blocker_id = get_user_id_by_username(session['username'])
+    unblock_user(blocker_id, user_id)
+    flash('You have unblocked this user.', 'success')
+    return redirect(url_for('profile', username=request.form['username']))
+
 @app.route('/profile/<username>')
 def profile(username):
     if 'username' not in session:
         return redirect(url_for('login'))
     user_id = get_user_id_by_username(username)
-    user_profile = get_user_profile(user_id)
-    notifications = get_notifications(user_id)
+    current_user_id = get_user_id_by_username(session['username'])
+    is_blocked = is_user_blocked(current_user_id, user_id)
+    is_blocking = is_user_blocked(user_id, current_user_id)
+    if is_blocked or is_blocking:
+        user_profile = (
+            user_id,
+            username,
+            'Hidden',
+            'default_blocked.png',
+            'Hidden',
+            'This user has blocked you or you have blocked this user.'
+        )
+    else:
+        user_profile = get_user_profile(user_id)
+    notifications = get_notifications(current_user_id)
     followers_count = get_followers_count(user_id)
-    return render_template('profile.html', user_profile=user_profile, notifications=notifications, followers_count=followers_count)
+    return render_template('profile.html', user_profile=user_profile, notifications=notifications, followers_count=followers_count, is_blocked=is_blocked, is_blocking=is_blocking)
 
 @app.route('/message_operations', methods=['POST'])
 def message_operations():

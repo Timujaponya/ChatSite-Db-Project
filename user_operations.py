@@ -35,3 +35,13 @@ def unfollow_user(follower_id, followed_id):
 def get_followers_count(user_id):
     result = execute_query('count_followers', (user_id,), fetch_one=True)
     return result[0] if result else 0
+
+def block_user(blocker_id, blocked_id):
+    return execute_query('block_user', (blocker_id, blocked_id))
+
+def unblock_user(blocker_id, blocked_id):
+    return execute_query('unblock_user', (blocker_id, blocked_id))
+
+def is_user_blocked(blocker_id, blocked_id):
+    result = execute_query('is_user_blocked', (blocker_id, blocked_id), fetch_one=True)
+    return result is not None

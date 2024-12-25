@@ -59,7 +59,6 @@ QUERIES = {
     'select_notification_by_id': "SELECT * FROM Notifications WHERE notification_id = %s;",
     'mark_notification_read': "UPDATE Notifications SET read = TRUE WHERE notification_id = %s;",
 
-
     # Likes
     'like_message': "INSERT INTO Likes (message_id, user_id) VALUES (%s, %s);",
     'unlike_message': "DELETE FROM Likes WHERE message_id = %s AND user_id = %s;",
@@ -83,4 +82,9 @@ QUERIES = {
         WHERE (DirectMessages.sender_id = %s OR DirectMessages.receiver_id = %s) AND Users.user_id != %s;
     """,
     'delete_dm': "DELETE FROM DirectMessages WHERE dm_id = %s;",
+
+    # Blocked Users
+    'block_user': "INSERT INTO BlockedUsers (blocker_id, blocked_id) VALUES (%s, %s);",
+    'unblock_user': "DELETE FROM BlockedUsers WHERE blocker_id = %s AND blocked_id = %s;",
+    'is_user_blocked': "SELECT 1 FROM BlockedUsers WHERE blocker_id = %s AND blocked_id = %s;",
 }
