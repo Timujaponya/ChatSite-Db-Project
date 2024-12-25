@@ -160,3 +160,20 @@ CREATE TABLE admins (
     admin_id SERIAL PRIMARY KEY,
     permission_level INT NOT NULL
 ) INHERITS (users);
+
+
+-- Tetikleyici Fonksiyonu: Yeni Takipçi Eklendiğinde Bildirim Ekleme
+CREATE OR REPLACE FUNCTION notify_new_follower()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO Notifications (user_id, content, sender_id)
+    VALUES (NEW.followed_id, (SELECT username FROM Users WHERE user_id = NEW.follower_id) || ' seni takip etmeye başladı', NEW.follower_id);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Tetikleyici: Yeni Takipçi Eklendiğinde Bildirim Ekleme
+CREATE TRIGGER after_follower_insert
+AFTER INSERT ON Followers
+FOR EACH ROW
+EXECUTE FUNCTION notify_new_follower();

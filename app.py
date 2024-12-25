@@ -1,7 +1,7 @@
 from flask import Flask, request, redirect, url_for, render_template, flash, session
 from settings import add_user, authenticate_user, update_user, update_password, update_profile_picture, get_user_id_by_username, get_user_profile, update_user_description
 from message_operations import add_message, list_all_messages_with_usernames, like_message, unlike_message, add_server, list_servers, delete_server, update_server, delete_message, add_dm, list_dms, delete_dm, list_dm_conversations
-from user_operations import list_users, follow_user, unfollow_user, get_followers_count  # Burada get_followers_count, follow_user ve unfollow_user fonksiyonlarını import edin
+from user_operations import list_users, follow_user, unfollow_user, get_followers_count
 from db_utils import execute_query
 import os
 

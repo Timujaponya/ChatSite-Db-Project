@@ -56,8 +56,9 @@ QUERIES = {
     # Notifications
     'insert_notification': "INSERT INTO Notifications (user_id, content, sender_id) VALUES (%s, %s, %s);",
     'select_notifications': "SELECT * FROM Notifications WHERE user_id = %s;",
-    'select_notification_by_id': "SELECT * FROM Notifications WHERE notification_id = %s;",  # Yeni sorgu eklendi
+    'select_notification_by_id': "SELECT * FROM Notifications WHERE notification_id = %s;",
     'mark_notification_read': "UPDATE Notifications SET read = TRUE WHERE notification_id = %s;",
+
 
     # Likes
     'like_message': "INSERT INTO Likes (message_id, user_id) VALUES (%s, %s);",
