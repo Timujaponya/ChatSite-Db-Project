@@ -1,12 +1,19 @@
+-- Roles Tablosu
+CREATE TABLE Roles (
+    role_id SERIAL PRIMARY KEY,
+    role_name VARCHAR(50) NOT NULL UNIQUE
+);
+
 -- Users Tablosu
 CREATE TABLE Users (
     user_id SERIAL PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    role VARCHAR(20) NOT NULL DEFAULT 'user',
     description TEXT,
-    profile_picture VARCHAR(255)
+    profile_picture VARCHAR(255),
+    role_id INT,
+    FOREIGN KEY (role_id) REFERENCES Roles(role_id)
 );
 
 -- Servers Tablosu
@@ -110,12 +117,6 @@ CREATE TABLE Reports (
     FOREIGN KEY (reported_message) REFERENCES Messages(message_id) ON DELETE CASCADE
 );
 
--- Roles Tablosu
-CREATE TABLE Roles (
-    role_id SERIAL PRIMARY KEY,
-    role_name VARCHAR(50) NOT NULL UNIQUE
-);
-
 -- SavedMessages Tablosu
 CREATE TABLE SavedMessages (
     user_id INT NOT NULL,
@@ -124,3 +125,43 @@ CREATE TABLE SavedMessages (
     FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (message_id) REFERENCES Messages(message_id) ON DELETE CASCADE
 );
+
+-- Tetikleyici Fonksiyonu: Yeni Mesaj Eklendiğinde Bildirim Ekleme
+CREATE OR REPLACE FUNCTION notify_new_message()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO Notifications (user_id, content)
+    VALUES (NEW.user_id, 'New message added: ' || NEW.content);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Tetikleyici: Yeni Mesaj Eklendiğinde Bildirim Ekleme
+CREATE TRIGGER after_message_insert
+AFTER INSERT ON Messages
+FOR EACH ROW
+EXECUTE FUNCTION notify_new_message();
+
+-- Tetikleyici Fonksiyonu: Kullanıcı Silindiğinde İlişkili Verileri Silme
+CREATE OR REPLACE FUNCTION delete_user_related_data()
+RETURNS TRIGGER AS $$
+BEGIN
+    DELETE FROM Messages WHERE user_id = OLD.user_id;
+    DELETE FROM Followers WHERE follower_id = OLD.user_id OR followed_id = OLD.user_id;
+    DELETE FROM Notifications WHERE user_id = OLD.user_id;
+    DELETE FROM Likes WHERE user_id = OLD.user_id;
+    DELETE FROM BlockedUsers WHERE blocker_id = OLD.user_id OR blocked_id = OLD.user_id;
+    DELETE FROM Comments WHERE user_id = OLD.user_id;
+    DELETE FROM DirectMessages WHERE sender_id = OLD.user_id OR receiver_id = OLD.user_id;
+    DELETE FROM Media WHERE user_id = OLD.user_id;
+    DELETE FROM Reports WHERE reported_by = OLD.user_id OR reported_user = OLD.user_id;
+    DELETE FROM SavedMessages WHERE user_id = OLD.user_id;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Tetikleyici: Kullanıcı Silindiğinde İlişkili Verileri Silme
+CREATE TRIGGER after_user_delete
+AFTER DELETE ON Users
+FOR EACH ROW
+EXECUTE FUNCTION delete_user_related_data();
