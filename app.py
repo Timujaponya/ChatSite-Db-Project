@@ -1,6 +1,6 @@
 from flask import Flask, request, redirect, url_for, render_template, flash, session
-from settings import add_user, authenticate_user, update_user, update_password, update_profile_picture, get_user_id_by_username, get_user_profile, update_user_description
-from message_operations import add_message, list_all_messages_with_usernames, like_message, unlike_message, add_server, list_servers, delete_server, update_server, delete_message, add_dm, list_dms, delete_dm, list_dm_conversations
+from settings import add_user, authenticate_user, get_user_id_by_username, get_user_profile, update_password, update_profile_picture, update_user, update_user_description
+from message_operations import list_saved_messages, save_message, add_message, list_all_messages_with_usernames, like_message, unlike_message, add_server, list_servers, delete_server, update_server, delete_message, add_dm, list_dms, delete_dm, list_dm_conversations
 from user_operations import list_users, follow_user, unfollow_user, get_followers_count, block_user, unblock_user, is_user_blocked
 from db_utils import execute_query
 import os
@@ -86,11 +86,11 @@ def update_user_info():
     new_username = request.form['username']
     new_email = request.form['email']
     new_description = request.form['description']
-    new_role = request.form.get('role', session['role'])  # Kullanıcının rolünü değiştirmesine izin vermeyin
+    new_role = request.form.get('role', session['role'])  # Do not allow changing the user's role
     user_id = get_user_id_by_username(session['username'])
     if user_id and new_username and new_email:
         if session['role'] != 'admin':
-            new_role = session['role']  # Admin olmayan kullanıcıların rolünü değiştirmesine izin vermeyin
+            new_role = session['role']  # Do not allow non-admin users to change their role
         update_user(user_id, new_username, new_email, new_role, new_description)
         session['username'] = new_username  # Update session username
         session['role'] = new_role  # Update session role
@@ -142,8 +142,8 @@ def follow(user_id):
     flash('You are now following this user!', 'success')
     return redirect(url_for('profile', username=request.form['username']))
 
-@app.route('/unfollow/<int:user_id>', methods=['POST'])
-def unfollow(user_id):
+@app.route('/unfollow_user/<int:user_id>', methods=['POST'])
+def unfollow_user_route(user_id):
     if 'username' not in session:
         return redirect(url_for('login'))
     follower_id = get_user_id_by_username(session['username'])
@@ -253,9 +253,9 @@ def delete_server_route():
         flash('You do not have permission to perform this action.', 'danger')
         return redirect(url_for('main'))
     server_id = request.form['server_id']
-    print(f"Deleting server with ID: {server_id}")  # Hata ayıklama için log ekleyin
+    print(f"Deleting server with ID: {server_id}")  # Add log for debugging
     result = delete_server(server_id)
-    print(f"Delete result: {result}")  # Hata ayıklama için log ekleyin
+    print(f"Delete result: {result}")  # Add log for debugging
     flash('Server deleted successfully!', 'success')
     return redirect(url_for('main'))
 
@@ -280,11 +280,11 @@ def delete_message_route():
     server_id = request.form['server_id']
     user_id = get_user_id_by_username(session['username'])
     
-    # Mesajın yazarı olup olmadığını kontrol et
+    # Check if the user is the author of the message
     message_author_id = execute_query('get_message_author', (message_id,), fetch_one=True)
     
     if message_author_id and message_author_id[0] == user_id:
-        print(f"Deleting message with ID: {message_id}")  # Hata ayıklama için log ekleyin
+        print(f"Deleting message with ID: {message_id}")  # Add log for debugging
         result = delete_message(message_id)
         print(f"Delete result: {result}")  # Hata ayıklama için log ekleyin
         if result is None:
@@ -333,18 +333,18 @@ def update_user_role():
     user_id = request.form['user_id']
     new_role = request.form['role']
     
-    # Hedef kullanıcının mevcut rolünü al
+    # Get the current role of the target user
     target_user_profile = get_user_profile(user_id)
-    target_user_role = target_user_profile[4]  # Rol bilgisi 5. sütunda
+    target_user_role = target_user_profile[4]  # Role information is in the 5th column
     
-    # Eğer hedef kullanıcı admin ise, rol değişikliğine izin verme
+    # If the target user is an admin, do not allow role change
     if target_user_role == 'admin':
         flash('You cannot change the role of another admin.', 'danger')
         return redirect(url_for('admin'))
     
     update_user(user_id, role=new_role)
     
-    # Eğer güncellenen kullanıcı oturum açmış kullanıcı ise, oturumdaki rol bilgisini güncelle
+    # If the updated user is the logged-in user, update the role information in the session
     if user_id == get_user_id_by_username(session['username']):
         session['role'] = new_role
     
@@ -424,6 +424,25 @@ def notification_redirect(notification_id):
     else:
         flash('Notification not found.', 'danger')
         return redirect(url_for('notifications'))
+
+@app.route('/save_message', methods=['POST'])
+def save_message_route():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    user_id = get_user_id_by_username(session['username'])
+    message_id = request.form['message_id']
+    save_message(user_id, message_id)
+    flash('Message saved successfully!', 'success')
+    return redirect(request.referrer)
+
+@app.route('/saved_messages')
+def saved_messages():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    user_id = get_user_id_by_username(session['username'])
+    saved_messages = list_saved_messages(user_id)
+    notifications = get_notifications(user_id)
+    return render_template('saved_messages.html', saved_messages=saved_messages, notifications=notifications)
 
 if __name__ == '__main__':
     app.run(debug=True)

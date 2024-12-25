@@ -87,4 +87,14 @@ QUERIES = {
     'block_user': "INSERT INTO BlockedUsers (blocker_id, blocked_id) VALUES (%s, %s);",
     'unblock_user': "DELETE FROM BlockedUsers WHERE blocker_id = %s AND blocked_id = %s;",
     'is_user_blocked': "SELECT 1 FROM BlockedUsers WHERE blocker_id = %s AND blocked_id = %s;",
+
+    # Saved Messages
+    'save_message': "INSERT INTO SavedMessages (user_id, message_id) VALUES (%s, %s);",
+    'select_saved_messages': """
+        SELECT Messages.content, Users.username, Messages.created_at
+        FROM SavedMessages
+        JOIN Messages ON SavedMessages.message_id = Messages.message_id
+        JOIN Users ON Messages.user_id = Users.user_id
+        WHERE SavedMessages.user_id = %s;
+    """,
 }

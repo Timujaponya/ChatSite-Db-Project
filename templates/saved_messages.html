@@ -1,0 +1,15 @@
+<!-- templates/saved_messages.html -->
+{% extends "base.html" %}
+
+{% block title %}Saved Messages{% endblock %}
+
+{% block content %}
+    <h1 class="mt-5">Saved Messages</h1>
+    <ul class="list-group mt-3">
+        {% for message in saved_messages %}
+            <li class="list-group-item">
+                <strong>{{ message[1] }}</strong>: {{ message[0] }} <small class="text-muted">{{ message[2] }}</small>
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}

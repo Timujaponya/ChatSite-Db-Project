@@ -25,7 +25,7 @@
                         <input type="hidden" name="username" value="{{ user_profile[1] }}">
                         <button type="submit" class="btn btn-primary">Follow</button>
                     </form>
-                    <form method="post" action="{{ url_for('unfollow', user_id=user_profile[0]) }}">
+                    <form method="post" action="{{ url_for('unfollow_user_route', user_id=user_profile[0]) }}">
                         <input type="hidden" name="username" value="{{ user_profile[1] }}">
                         <button type="submit" class="btn btn-secondary">Unfollow</button>
                     </form>

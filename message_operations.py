@@ -69,3 +69,9 @@ def list_dm_conversations(user_id):
 
 def delete_dm(dm_id):
     return execute_query('delete_dm', (dm_id,))
+
+def save_message(user_id, message_id):
+    return execute_query('save_message', (user_id, message_id))
+
+def list_saved_messages(user_id):
+    return execute_query('select_saved_messages', (user_id,), fetch_all=True)
