@@ -51,7 +51,7 @@ QUERIES = {
     # Followers
     'add_follower': "INSERT INTO Followers (follower_id, followed_id) VALUES (%s, %s);",
     'remove_follower': "DELETE FROM Followers WHERE follower_id = %s AND followed_id = %s;",
-    'list_followers': "SELECT follower_id FROM Followers WHERE followed_id = %s;",
+    'count_followers': "SELECT COUNT(*) FROM Followers WHERE followed_id = %s;",
 
     # Notifications
     'insert_notification': "INSERT INTO Notifications (user_id, content, sender_id) VALUES (%s, %s, %s);",

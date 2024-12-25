@@ -25,3 +25,13 @@ def authenticate_user(username, password):
 def get_user_id_by_username(username):
     result = execute_query('get_user_id_by_username', (username,), fetch_one=True)
     return result[0] if result else None
+
+def follow_user(follower_id, followed_id):
+    return execute_query('add_follower', (follower_id, followed_id))
+
+def unfollow_user(follower_id, followed_id):
+    return execute_query('remove_follower', (follower_id, followed_id))
+
+def get_followers_count(user_id):
+    result = execute_query('count_followers', (user_id,), fetch_one=True)
+    return result[0] if result else 0

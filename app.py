@@ -1,7 +1,7 @@
 from flask import Flask, request, redirect, url_for, render_template, flash, session
 from settings import add_user, authenticate_user, update_user, update_password, update_profile_picture, get_user_id_by_username, get_user_profile, update_user_description
 from message_operations import add_message, list_all_messages_with_usernames, like_message, unlike_message, add_server, list_servers, delete_server, update_server, delete_message, add_dm, list_dms, delete_dm, list_dm_conversations
-from user_operations import list_users
+from user_operations import list_users, follow_user, unfollow_user, get_followers_count  # Burada get_followers_count, follow_user ve unfollow_user fonksiyonlarını import edin
 from db_utils import execute_query
 import os
 
@@ -133,6 +133,24 @@ def update_profile_picture_route():
         flash('Profile picture is required.', 'danger')
     return redirect(url_for('settings'))
 
+@app.route('/follow/<int:user_id>', methods=['POST'])
+def follow(user_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    follower_id = get_user_id_by_username(session['username'])
+    follow_user(follower_id, user_id)
+    flash('You are now following this user!', 'success')
+    return redirect(url_for('profile', username=request.form['username']))
+
+@app.route('/unfollow/<int:user_id>', methods=['POST'])
+def unfollow(user_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    follower_id = get_user_id_by_username(session['username'])
+    unfollow_user(follower_id, user_id)
+    flash('You have unfollowed this user.', 'success')
+    return redirect(url_for('profile', username=request.form['username']))
+
 @app.route('/profile/<username>')
 def profile(username):
     if 'username' not in session:
@@ -140,7 +158,8 @@ def profile(username):
     user_id = get_user_id_by_username(username)
     user_profile = get_user_profile(user_id)
     notifications = get_notifications(user_id)
-    return render_template('profile.html', user_profile=user_profile, notifications=notifications)
+    followers_count = get_followers_count(user_id)
+    return render_template('profile.html', user_profile=user_profile, notifications=notifications, followers_count=followers_count)
 
 @app.route('/message_operations', methods=['POST'])
 def message_operations():
