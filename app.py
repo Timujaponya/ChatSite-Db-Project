@@ -306,11 +306,10 @@ def direct_messages_with_user(receiver_id):
     if user_id == int(receiver_id):
         flash('You cannot access your own DM section.', 'danger')
         return redirect(url_for('direct_messages'))
-    dms_sent = list_dms(user_id, receiver_id)
-    dms_received = list_dms(receiver_id, user_id)
+    dms = list_dms(user_id, receiver_id)
     receiver_profile = get_user_profile(receiver_id)
     notifications = get_notifications(user_id)
-    return render_template('direct_messages_with_user.html', dms_sent=dms_sent, dms_received=dms_received, receiver_profile=receiver_profile, notifications=notifications)
+    return render_template('direct_messages_with_user.html', dms=dms, receiver_profile=receiver_profile, notifications=notifications)
 
 @app.route('/send_dm', methods=['POST'])
 def send_dm():
@@ -323,8 +322,11 @@ def send_dm():
         flash('You cannot send a message to yourself.', 'danger')
         return redirect(url_for('direct_messages_with_user', receiver_id=receiver_id))
     if receiver_id and content:
-        add_dm(sender_id, receiver_id, content)
-        flash('Direct message sent successfully!', 'success')
+        result = add_dm(sender_id, receiver_id, content)
+        if result:
+            flash('Direct message sent successfully!', 'success')
+        else:
+            flash('Failed to send direct message.', 'danger')
     else:
         flash('Valid receiver and content are required.', 'danger')
     return redirect(url_for('direct_messages_with_user', receiver_id=receiver_id))

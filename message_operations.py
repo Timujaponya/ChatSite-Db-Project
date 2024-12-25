@@ -55,12 +55,16 @@ def update_server(server_id, server_name):
     execute_query('update_server', (server_name, server_id))
     return f"Server {server_id} updated."
 
-# Direct Messages
+# message_operations.py
 def add_dm(sender_id, receiver_id, content):
-    return execute_query('insert_dm', (sender_id, receiver_id, content), fetch_one=True)
+    print(f"Adding DM from {sender_id} to {receiver_id} with content: {content}")  # Hata ayıklama için log ekleyin
+    result = execute_query('insert_dm', (sender_id, receiver_id, content), fetch_one=True)
+    print(f"Add DM result: {result}")  # Hata ayıklama için log ekleyin
+    return result
 
+# message_operations.py
 def list_dms(sender_id, receiver_id):
-    return execute_query('select_dms', (receiver_id, sender_id), fetch_all=True)
+    return execute_query('select_dms', (sender_id, receiver_id, receiver_id, sender_id), fetch_all=True)
 
 def list_dm_conversations(user_id):
     return execute_query('list_dm_conversations', (user_id, user_id, user_id), fetch_all=True)

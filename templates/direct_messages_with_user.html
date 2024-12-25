@@ -7,26 +7,19 @@
     <h1 class="mt-5">Direct Messages with {{ receiver_profile[1] }}</h1>
     <div class="row">
         <div class="col-md-12">
-            {% if dms_sent or dms_received %}
+            {% if dms %}
                 <h2>Messages</h2>
                 <ul class="list-group">
-                    {% for dm in dms_sent %}
-                        <li class="list-group-item d-flex justify-content-end align-items-center">
+                    {% for dm in dms %}
+                        <li class="list-group-item d-flex {% if dm[2] == session['user_id'] %}justify-content-end{% else %}justify-content-start{% endif %} align-items-center">
                             <div class="d-flex align-items-center">
+                                {% if dm[2] != session['user_id'] %}
+                                    <img src="{{ url_for('static', filename='profile_pictures/' ~ (dm[3] if dm[3] else 'default.png')) }}" class="rounded-circle mr-2" width="30" height="30" alt="Profile Picture">
+                                {% endif %}
                                 <strong>{{ dm[1] }}</strong>: {{ dm[0] }}
-                                <img src="{{ url_for('static', filename='profile_pictures/' ~ (dm[3] if dm[3] else 'default.png')) }}" class="rounded-circle ml-2" width="30" height="30" alt="Profile Picture">
-                            </div>
-                            <form method="post" action="{{ url_for('delete_dm_route') }}" class="d-inline ml-2">
-                                <input type="hidden" name="dm_id" value="{{ dm[4] }}">
-                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                            </form>
-                        </li>
-                    {% endfor %}
-                    {% for dm in dms_received %}
-                        <li class="list-group-item d-flex justify-content-start align-items-center">
-                            <div class="d-flex align-items-center">
-                                <img src="{{ url_for('static', filename='profile_pictures/' ~ (dm[3] if dm[3] else 'default.png')) }}" class="rounded-circle mr-2" width="30" height="30" alt="Profile Picture">
-                                <strong>{{ dm[1] }}</strong>: {{ dm[0] }}
+                                {% if dm[2] == session['user_id'] %}
+                                    <img src="{{ url_for('static', filename='profile_pictures/' ~ (dm[3] if dm[3] else 'default.png')) }}" class="rounded-circle ml-2" width="30" height="30" alt="Profile Picture">
+                                {% endif %}
                             </div>
                             <form method="post" action="{{ url_for('delete_dm_route') }}" class="d-inline ml-2">
                                 <input type="hidden" name="dm_id" value="{{ dm[4] }}">

@@ -37,11 +37,11 @@ QUERIES = {
     'insert_message': "INSERT INTO Messages (user_id, content, server_id) VALUES (%s, %s, %s) RETURNING message_id;",
     'select_messages': "SELECT * FROM Messages WHERE user_id = %s;",
     'select_all_messages_with_usernames': """
-        SELECT Messages.content, Users.username, Messages.user_id, Users.profile_picture, Messages.message_id
+        SELECT Messages.content, Users.username, Messages.user_id, Users.profile_picture, Messages.message_id, Messages.created_at
         FROM Messages
         JOIN Users ON Messages.user_id = Users.user_id
         WHERE Messages.server_id = %s
-        ORDER BY Messages.created_at ASC;
+        ORDER BY Messages.created_at ASC;  -- Mesajları gönderim tarihine göre sıralar
     """,
     'delete_message': "DELETE FROM Messages WHERE message_id = %s;",
     'delete_messages_by_server': "DELETE FROM Messages WHERE server_id = %s;",
@@ -67,12 +67,14 @@ QUERIES = {
     # Direct Messages
     'insert_dm': "INSERT INTO DirectMessages (sender_id, receiver_id, content) VALUES (%s, %s, %s) RETURNING dm_id;",
     'select_dms': """
-        SELECT DirectMessages.content, Users.username, DirectMessages.sender_id, Users.profile_picture, DirectMessages.dm_id
+        SELECT DirectMessages.content, Users.username, DirectMessages.sender_id, Users.profile_picture, DirectMessages.dm_id, DirectMessages.created_at
         FROM DirectMessages
         JOIN Users ON DirectMessages.sender_id = Users.user_id
-        WHERE DirectMessages.receiver_id = %s AND DirectMessages.sender_id = %s
-        ORDER BY DirectMessages.created_at ASC;
+        WHERE (DirectMessages.receiver_id = %s AND DirectMessages.sender_id = %s)
+           OR (DirectMessages.receiver_id = %s AND DirectMessages.sender_id = %s)
+        ORDER BY DirectMessages.created_at ASC;  -- Mesajları gönderim tarihine göre sıralar
     """,
+    
     'list_dm_conversations': """
         SELECT DISTINCT ON (Users.user_id) Users.user_id, Users.username
         FROM DirectMessages
