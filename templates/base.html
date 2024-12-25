@@ -22,6 +22,13 @@
             padding: 10px 0;
             z-index: 1000;
         }
+
+        .floating-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
@@ -57,7 +64,7 @@
                         </a>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="notificationsDropdown">
                             {% for notification in notifications %}
-                                <a class="dropdown-item" href="#">{{ notification[2] }}</a>
+                                <a class="dropdown-item" href="{{ url_for('notification_redirect', notification_id=notification[0]) }}">{{ notification[2] }}</a>
                             {% endfor %}
                         </div>
                     </li>
@@ -94,6 +101,11 @@
             <p class="text-center">&copy; 2023 MyApp. All rights reserved.</p>
         </div>
     </footer>
+
+    {% if 'username' in session %}
+    <a href="{{ url_for('direct_messages') }}" class="btn btn-primary floating-button">Direct Messages</a>
+    {% endif %}
+
     <!-- Bootstrap JS and dependencies -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>

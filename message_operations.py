@@ -54,3 +54,16 @@ def delete_server(server_id):
 def update_server(server_id, server_name):
     execute_query('update_server', (server_name, server_id))
     return f"Server {server_id} updated."
+
+# Direct Messages
+def add_dm(sender_id, receiver_id, content):
+    return execute_query('insert_dm', (sender_id, receiver_id, content), fetch_one=True)
+
+def list_dms(sender_id, receiver_id):
+    return execute_query('select_dms', (receiver_id, sender_id), fetch_all=True)
+
+def list_dm_conversations(user_id):
+    return execute_query('list_dm_conversations', (user_id, user_id, user_id), fetch_all=True)
+
+def delete_dm(dm_id):
+    return execute_query('delete_dm', (dm_id,))

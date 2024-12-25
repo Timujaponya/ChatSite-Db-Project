@@ -1,6 +1,6 @@
 from flask import Flask, request, redirect, url_for, render_template, flash, session
 from settings import add_user, authenticate_user, update_user, update_password, update_profile_picture, get_user_id_by_username, get_user_profile, update_user_description
-from message_operations import add_message, list_all_messages_with_usernames, like_message, unlike_message, add_server, list_servers, delete_server, update_server, delete_message
+from message_operations import add_message, list_all_messages_with_usernames, like_message, unlike_message, add_server, list_servers, delete_server, update_server, delete_message, add_dm, list_dms, delete_dm, list_dm_conversations
 from user_operations import list_users
 from db_utils import execute_query
 import os
@@ -210,18 +210,28 @@ def update_server_route():
 
 @app.route('/delete_message', methods=['POST'])
 def delete_message_route():
-    if 'username' not in session or session.get('role') != 'admin':
+    if 'username' not in session:
         flash('You do not have permission to perform this action.', 'danger')
         return redirect(url_for('main'))
+    
     message_id = request.form['message_id']
     server_id = request.form['server_id']
-    print(f"Deleting message with ID: {message_id}")  # Hata ayıklama için log ekleyin
-    result = delete_message(message_id)
-    print(f"Delete result: {result}")  # Hata ayıklama için log ekleyin
-    if result is None:
-        flash('Failed to delete message.', 'danger')
+    user_id = get_user_id_by_username(session['username'])
+    
+    # Mesajın yazarı olup olmadığını kontrol et
+    message_author_id = execute_query('get_message_author', (message_id,), fetch_one=True)
+    
+    if message_author_id and message_author_id[0] == user_id:
+        print(f"Deleting message with ID: {message_id}")  # Hata ayıklama için log ekleyin
+        result = delete_message(message_id)
+        print(f"Delete result: {result}")  # Hata ayıklama için log ekleyin
+        if result is None:
+            flash('Failed to delete message.', 'danger')
+        else:
+            flash('Message deleted successfully!', 'success')
     else:
-        flash('Message deleted successfully!', 'success')
+        flash('You do not have permission to delete this message.', 'danger')
+    
     return redirect(url_for('server', server_id=server_id))
 
 @app.route('/logout')
@@ -278,6 +288,78 @@ def update_user_role():
     
     flash('User role updated successfully!', 'success')
     return redirect(url_for('admin'))
+
+@app.route('/direct_messages')
+def direct_messages():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    user_id = get_user_id_by_username(session['username'])
+    conversations = list_dm_conversations(user_id)
+    notifications = get_notifications(user_id)
+    return render_template('direct_messages.html', conversations=conversations, notifications=notifications)
+
+@app.route('/direct_messages/<receiver_id>')
+def direct_messages_with_user(receiver_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    user_id = get_user_id_by_username(session['username'])
+    if user_id == int(receiver_id):
+        flash('You cannot access your own DM section.', 'danger')
+        return redirect(url_for('direct_messages'))
+    dms_sent = list_dms(user_id, receiver_id)
+    dms_received = list_dms(receiver_id, user_id)
+    receiver_profile = get_user_profile(receiver_id)
+    notifications = get_notifications(user_id)
+    return render_template('direct_messages_with_user.html', dms_sent=dms_sent, dms_received=dms_received, receiver_profile=receiver_profile, notifications=notifications)
+
+@app.route('/send_dm', methods=['POST'])
+def send_dm():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    sender_id = get_user_id_by_username(session['username'])
+    receiver_id = request.form['receiver_id']
+    content = request.form['content']
+    if sender_id == int(receiver_id):
+        flash('You cannot send a message to yourself.', 'danger')
+        return redirect(url_for('direct_messages_with_user', receiver_id=receiver_id))
+    if receiver_id and content:
+        add_dm(sender_id, receiver_id, content)
+        flash('Direct message sent successfully!', 'success')
+    else:
+        flash('Valid receiver and content are required.', 'danger')
+    return redirect(url_for('direct_messages_with_user', receiver_id=receiver_id))
+
+@app.route('/delete_dm', methods=['POST'])
+def delete_dm_route():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    dm_id = request.form['dm_id']
+    result = delete_dm(dm_id)
+    if result is None:
+        flash('Failed to delete direct message.', 'danger')
+    else:
+        flash('Direct message deleted successfully!', 'success')
+    return redirect(url_for('direct_messages'))
+
+@app.route('/notifications')
+def notifications():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    user_id = get_user_id_by_username(session['username'])
+    notifications = get_notifications(user_id)
+    return render_template('notifications.html', notifications=notifications)
+
+@app.route('/notification_redirect/<int:notification_id>')
+def notification_redirect(notification_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    notification = execute_query('select_notification_by_id', (notification_id,), fetch_one=True)
+    if notification:
+        sender_id = notification[3]  # sender_id is the fourth column in the Notifications table
+        return redirect(url_for('direct_messages_with_user', receiver_id=sender_id))
+    else:
+        flash('Notification not found.', 'danger')
+        return redirect(url_for('notifications'))
 
 if __name__ == '__main__':
     app.run(debug=True)

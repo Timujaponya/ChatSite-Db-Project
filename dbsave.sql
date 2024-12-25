@@ -51,9 +51,11 @@ CREATE TABLE Notifications (
     notification_id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
     content TEXT NOT NULL,
+    sender_id INT NOT NULL,
     read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
 
 -- Likes Tablosu
@@ -134,8 +136,8 @@ CREATE TABLE SavedMessages (
 CREATE OR REPLACE FUNCTION notify_new_message()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO Notifications (user_id, content)
-    VALUES (NEW.user_id, 'New message added: ' || NEW.content);
+    INSERT INTO Notifications (user_id, content, sender_id)
+    VALUES (NEW.user_id, 'New message added: ' || NEW.content, NEW.user_id);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -145,6 +147,22 @@ CREATE TRIGGER after_message_insert
 AFTER INSERT ON Messages
 FOR EACH ROW
 EXECUTE FUNCTION notify_new_message();
+
+-- Tetikleyici Fonksiyonu: Yeni DM Eklendiğinde Bildirim Ekleme
+CREATE OR REPLACE FUNCTION notify_new_dm()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO Notifications (user_id, content, sender_id)
+    VALUES (NEW.receiver_id, (SELECT username FROM Users WHERE user_id = NEW.sender_id) || ' tarafından bir mesaj var', NEW.sender_id);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Tetikleyici: Yeni DM Eklendiğinde Bildirim Ekleme
+CREATE TRIGGER after_dm_insert
+AFTER INSERT ON DirectMessages
+FOR EACH ROW
+EXECUTE FUNCTION notify_new_dm();
 
 -- Tetikleyici Fonksiyonu: Kullanıcı Silindiğinde İlişkili Verileri Silme
 CREATE OR REPLACE FUNCTION delete_user_related_data()

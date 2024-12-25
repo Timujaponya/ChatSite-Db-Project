@@ -1,0 +1,54 @@
+<!-- templates/direct_messages.html -->
+{% extends "base.html" %}
+
+{% block title %}Direct Messages{% endblock %}
+
+{% block content %}
+    <h1 class="mt-5">Direct Messages</h1>
+    <div class="row">
+        <div class="col-md-4">
+            <h2>Conversations</h2>
+            <ul class="list-group">
+                {% for conversation in conversations %}
+                    <li class="list-group-item">
+                        <a href="{{ url_for('direct_messages_with_user', receiver_id=conversation[0]) }}">{{ conversation[1] }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="col-md-8">
+            {% if dms %}
+                <h2>Messages</h2>
+                <ul class="list-group">
+                    {% for dm in dms %}
+                        <li class="list-group-item d-flex {% if dm[2] == session['user_id'] %}justify-content-end{% else %}justify-content-start{% endif %} align-items-center">
+                            <div class="d-flex align-items-center">
+                                {% if dm[2] != session['user_id'] %}
+                                    <img src="{{ url_for('static', filename='profile_pictures/' ~ (dm[3] if dm[3] else 'default.png')) }}" class="rounded-circle mr-2" width="30" height="30" alt="Profile Picture">
+                                {% endif %}
+                                <strong>{{ dm[1] }}</strong>: {{ dm[0] }}
+                                {% if dm[2] == session['user_id'] %}
+                                    <img src="{{ url_for('static', filename='profile_pictures/' ~ (dm[3] if dm[3] else 'default.png')) }}" class="rounded-circle ml-2" width="30" height="30" alt="Profile Picture">
+                                {% endif %}
+                            </div>
+                            <form method="post" action="{{ url_for('delete_dm_route') }}" class="d-inline ml-2">
+                                <input type="hidden" name="dm_id" value="{{ dm[4] }}">
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <form method="post" action="{{ url_for('send_dm') }}" class="mt-3">
+                    <input type="hidden" name="receiver_id" value="{{ receiver_id }}">
+                    <div class="form-group">
+                        <label for="content">Message Content:</label>
+                        <textarea id="content" name="content" class="form-control" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                </form>
+            {% else %}
+                <p>Select a conversation to view messages.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

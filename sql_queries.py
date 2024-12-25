@@ -25,7 +25,7 @@ QUERIES = {
     """,
     'update_profile_picture': "UPDATE Users SET profile_picture = %s WHERE user_id = %s;",
     'update_user_description': "UPDATE Users SET description = %s WHERE user_id = %s;",
-    'get_role_id_by_name': "SELECT role_id FROM Roles WHERE role_name = %s;",  # Yeni sorgu eklendi
+    'get_role_id_by_name': "SELECT role_id FROM Roles WHERE role_name = %s;",
 
     # Servers
     'insert_server': "INSERT INTO Servers (server_name) VALUES (%s) RETURNING server_id;",
@@ -43,9 +43,10 @@ QUERIES = {
         WHERE Messages.server_id = %s
         ORDER BY Messages.created_at ASC;
     """,
-    'delete_message': "DELETE FROM Messages WHERE message_id = %s;",  # Mesajı sil
-    'delete_messages_by_server': "DELETE FROM Messages WHERE server_id = %s;",  # Sunucuya bağlı tüm mesajları sil
+    'delete_message': "DELETE FROM Messages WHERE message_id = %s;",
+    'delete_messages_by_server': "DELETE FROM Messages WHERE server_id = %s;",
     'update_message': "UPDATE Messages SET content = %s WHERE message_id = %s;",
+    'get_message_author': "SELECT user_id FROM Messages WHERE message_id = %s;",  # Yeni sorgu eklendi
 
     # Followers
     'add_follower': "INSERT INTO Followers (follower_id, followed_id) VALUES (%s, %s);",
@@ -53,12 +54,30 @@ QUERIES = {
     'list_followers': "SELECT follower_id FROM Followers WHERE followed_id = %s;",
 
     # Notifications
-    'insert_notification': "INSERT INTO Notifications (user_id, content) VALUES (%s, %s);",
+    'insert_notification': "INSERT INTO Notifications (user_id, content, sender_id) VALUES (%s, %s, %s);",
     'select_notifications': "SELECT * FROM Notifications WHERE user_id = %s;",
+    'select_notification_by_id': "SELECT * FROM Notifications WHERE notification_id = %s;",  # Yeni sorgu eklendi
     'mark_notification_read': "UPDATE Notifications SET read = TRUE WHERE notification_id = %s;",
 
     # Likes
     'like_message': "INSERT INTO Likes (message_id, user_id) VALUES (%s, %s);",
     'unlike_message': "DELETE FROM Likes WHERE message_id = %s AND user_id = %s;",
-    'count_likes': "SELECT COUNT(*) FROM Likes WHERE message_id = %s;"
+    'count_likes': "SELECT COUNT(*) FROM Likes WHERE message_id = %s;",
+
+    # Direct Messages
+    'insert_dm': "INSERT INTO DirectMessages (sender_id, receiver_id, content) VALUES (%s, %s, %s) RETURNING dm_id;",
+    'select_dms': """
+        SELECT DirectMessages.content, Users.username, DirectMessages.sender_id, Users.profile_picture, DirectMessages.dm_id
+        FROM DirectMessages
+        JOIN Users ON DirectMessages.sender_id = Users.user_id
+        WHERE DirectMessages.receiver_id = %s AND DirectMessages.sender_id = %s
+        ORDER BY DirectMessages.created_at ASC;
+    """,
+    'list_dm_conversations': """
+        SELECT DISTINCT ON (Users.user_id) Users.user_id, Users.username
+        FROM DirectMessages
+        JOIN Users ON DirectMessages.sender_id = Users.user_id OR DirectMessages.receiver_id = Users.user_id
+        WHERE (DirectMessages.sender_id = %s OR DirectMessages.receiver_id = %s) AND Users.user_id != %s;
+    """,
+    'delete_dm': "DELETE FROM DirectMessages WHERE dm_id = %s;",
 }
