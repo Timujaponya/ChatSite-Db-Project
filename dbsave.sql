@@ -4,6 +4,9 @@ CREATE TABLE Roles (
     role_name VARCHAR(50) NOT NULL UNIQUE
 );
 
+-- Varsayılan roller ekle
+INSERT INTO Roles (role_name) VALUES ('admin'), ('user');
+
 -- Users Tablosu
 CREATE TABLE Users (
     user_id SERIAL PRIMARY KEY,
@@ -13,7 +16,8 @@ CREATE TABLE Users (
     description TEXT,
     profile_picture VARCHAR(255),
     role_id INT,
-    FOREIGN KEY (role_id) REFERENCES Roles(role_id)
+    FOREIGN KEY (role_id) REFERENCES Roles(role_id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Servers Tablosu
@@ -165,3 +169,8 @@ CREATE TRIGGER after_user_delete
 AFTER DELETE ON Users
 FOR EACH ROW
 EXECUTE FUNCTION delete_user_related_data();
+
+CREATE TABLE admins (
+    admin_id SERIAL PRIMARY KEY,
+    permission_level INT NOT NULL
+) INHERITS (users);
