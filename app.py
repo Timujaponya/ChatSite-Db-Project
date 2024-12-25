@@ -165,6 +165,9 @@ def unblock(user_id):
     if 'username' not in session:
         return redirect(url_for('login'))
     blocker_id = get_user_id_by_username(session['username'])
+    if not is_user_blocked(blocker_id, user_id):
+        flash('You cannot unblock this user.', 'danger')
+        return redirect(url_for('profile', username=request.form['username']))
     unblock_user(blocker_id, user_id)
     flash('You have unblocked this user.', 'success')
     return redirect(url_for('profile', username=request.form['username']))
@@ -177,20 +180,29 @@ def profile(username):
     current_user_id = get_user_id_by_username(session['username'])
     is_blocked = is_user_blocked(current_user_id, user_id)
     is_blocking = is_user_blocked(user_id, current_user_id)
-    if is_blocked or is_blocking:
+    if is_blocked:
         user_profile = (
             user_id,
             username,
             'Hidden',
             'default_blocked.png',
             'Hidden',
-            'This user has blocked you or you have blocked this user.'
+            'This user has blocked you.'
+        )
+    elif is_blocking:
+        user_profile = (
+            user_id,
+            username,
+            'Hidden',
+            'default_blocked.png',
+            'Hidden',
+            'You have blocked this user.'
         )
     else:
         user_profile = get_user_profile(user_id)
     notifications = get_notifications(current_user_id)
     followers_count = get_followers_count(user_id)
-    return render_template('profile.html', user_profile=user_profile, notifications=notifications, followers_count=followers_count, is_blocked=is_blocked, is_blocking=is_blocking)
+    return render_template('profile.html', user_profile=user_profile, notifications=notifications, followers_count=followers_count, is_blocked=is_blocked, is_blocking=is_blocking, current_user_id=current_user_id)
 
 @app.route('/message_operations', methods=['POST'])
 def message_operations():
@@ -390,7 +402,7 @@ def delete_dm_route():
     if result is None:
         flash('Failed to delete direct message.', 'danger')
     else:
-        flash('Direct message deleted successfully!', 'success')
+        flash('Direct message deleted successfully.', 'success')
     return redirect(url_for('direct_messages'))
 
 @app.route('/notifications')

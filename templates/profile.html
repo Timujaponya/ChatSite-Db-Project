@@ -15,7 +15,12 @@
                 <p>Role: {{ user_profile[4] }}</p>
                 <p>Description: {{ user_profile[5] }}</p>
                 <p>Followers: {{ followers_count }}</p>
-                {% if not is_blocked and not is_blocking %}
+                {% if is_blocking %}
+                    <form method="post" action="{{ url_for('unblock', user_id=user_profile[0]) }}">
+                        <input type="hidden" name="username" value="{{ user_profile[1] }}">
+                        <button type="submit" class="btn btn-warning">Unblock</button>
+                    </form>
+                {% elif not is_blocked %}
                     <form method="post" action="{{ url_for('follow', user_id=user_profile[0]) }}">
                         <input type="hidden" name="username" value="{{ user_profile[1] }}">
                         <button type="submit" class="btn btn-primary">Follow</button>
@@ -28,11 +33,6 @@
                     <form method="post" action="{{ url_for('block', user_id=user_profile[0]) }}">
                         <input type="hidden" name="username" value="{{ user_profile[1] }}">
                         <button type="submit" class="btn btn-danger">Block</button>
-                    </form>
-                {% elif is_blocking %}
-                    <form method="post" action="{{ url_for('unblock', user_id=user_profile[0]) }}">
-                        <input type="hidden" name="username" value="{{ user_profile[1] }}">
-                        <button type="submit" class="btn btn-warning">Unblock</button>
                     </form>
                 {% endif %}
             </div>
